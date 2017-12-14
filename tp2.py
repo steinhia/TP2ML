@@ -8,29 +8,30 @@ from createGlobalEllipseDataBase import Ellipse
 from createGlobalEllipseDataBase import loadGlobalListFromFile
 
 
-scaleFactor=1.2
-minNeighbors=7
+
 
 
 def testScaleFactor(ellipseDict):
     minNeighbors=3
     L=[]
-    for i in np.arange(1.1,1.2,0.1):
+    dico=dict()
+    for i in np.arange(1.05,1.7,0.1):
         rate=testDataBase(i,minNeighbors,ellipseDict)
-    return rate
+        dico[i]=rate
+    return dico
 
 def testMinNeighbors(ellipseDict):
     scaleFactor=1.2
-    [TP,FP,FN]=[0,0,0]
+    dico=dict()
     for i in range(1,11):
         rate=testDataBase(scaleFactor,i,ellipseDict)
-    return rate
+        dico[i]=rate
+    return dico
         
 
 def testDataBase(scaleFactor,minNeighbors,ellipseDict):
     rate=[0,0,0]
     i=0
-    l=len(ellipseList)
     n_images=0
     for ellipses in ellipseDict:
         i+=1
@@ -42,21 +43,18 @@ def testDataBase(scaleFactor,minNeighbors,ellipseDict):
             if(res!=-1):
                 n_images+=1
                 anal=analyseResult(res,ellipseDict[ellipses])
-                if(False):#anal[2]-anal[0]>2):
-                    print anal
-                    print ellipseFilename
                 if(anal[0]+anal[1]==0):
                     TPR=0
                 else:
-                    TPR=anal[0]/(anal[0]+anal[1])
+                    TPR=float(anal[0])/float(anal[0]+anal[1])
                 if(anal[0]+anal[2]==0):
                     PPV=0
                 else:
-                    PPV=anal[0]/(anal[0]+anal[2])
-                F1=2*anal[0]/(2*anal[0]+anal[2]+anal[1])
-                #anal=[TPR,PPV,F1]
+                    PPV=float(anal[0])/float(anal[0]+anal[2])
+                F1=2*float(anal[0])/float(2*anal[0]+anal[2]+anal[1])              
+                anal=[TPR,PPV,F1]
                 rate=[rate[j]+anal[j] for j in range(3)]
-    #rate=[rate[j]/n_images for j in range(3)]
+    rate=[rate[j]/n_images for j in range(3)]
     print str(n_images) + " images lues"
     return rate
             
@@ -96,8 +94,6 @@ def isInsideEllipse(center,ellipse):
 
 def  analyseResult(res,ellipses):
     TP=0
-    NFound=len(res)
-    NToFind=len(ellipses)
     for i in res:
         for ellipse in ellipses:
             if(isInsideEllipse(i,ellipse)):
@@ -107,6 +103,8 @@ def  analyseResult(res,ellipses):
     return [TP,FN,FP]
 
 ellipseList = loadGlobalListFromFile("ellipseList.pkl")
-UnitTest(1.2,5,"2002/08/02/big/img_838",True)
+#UnitTest(1.2,5,"2002/08/02/big/img_838",True)
 print "TP,FN,FP"
-#print(testScaleFactor(ellipseList))
+scaleFactor=1.2
+minNeighbors=3
+print(testScaleFactor(ellipseList))
