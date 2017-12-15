@@ -7,9 +7,31 @@ from matplotlib import pyplot as plt
 from createGlobalEllipseDataBase import Ellipse
 from createGlobalEllipseDataBase import loadGlobalListFromFile
 from os import path
+=======
 
+def scaleValuesForPlottingTestScaleFactor(dico): # prend en entrée le résultat de testScaleFactor
+    dicoSorted = sorted(dico.items(), key=lambda t: t[0])
+    lengthDico = len(dicoSorted)
+    result = []
+    for i in range(0,lengthDico):
+        result.append(dicoSorted[i][0])
+    return result
 
-
+def resultTestScaleFactor(dico,result="TPR"):
+    scaleValue = scaleValuesForPlottingTestScaleFactor(dico);
+    resultVector = []
+    for value in scaleValue:
+        if result == "TPR":
+            resultVector.append(dico[value][0])
+        elif result == "PPV" :
+            resultVector.append(dico[value][1])
+        elif result == "F1" :
+            resultVector.append(dico[value][2])
+        else:
+            return None
+    return resultVector
+        
+    
 def testScaleFactor(ellipseDict):
     minNeighbors=3
     L=[]
@@ -19,9 +41,7 @@ def testScaleFactor(ellipseDict):
         dico[i]=rate
     return dico
 
-
-
-def testMinNeighbors(ellipseDict):
+def testMinNeighbours(ellipseDict):
     scaleFactor=1.2
     dico=dict()
     for i in range(1,11):
@@ -40,10 +60,10 @@ def testDataBase(scaleFactor,minNeighbors,ellipseDict):
     n_imagesBig=0
     for ellipses in ellipseDict:
         i+=1
-        if(i<100):
+        if(i<200 and i>100):
             if(i%100==0):
                 print str(i) + "/" + str(l)
-            ellipseFilename=ellipseDict[ellipses][0].imageFileName       
+            ellipseFilename=ellipseDict[ellipses][0].imageFileName
             res=UnitTest(scaleFactor,minNeighbors,ellipseFilename,False)
             if(res!=-1):
                 n_images+=1
@@ -151,5 +171,25 @@ scaleFactor=1.2
 minNeighbors=3
 print(testScaleFactor(ellipseList))
 
+scale = testScaleFactor(ellipseList)
+xValue = scaleValuesForPlottingTestScaleFactor(scale)
+TPR_scale = resultTestScaleFactor(scale,result="TPR")
+PPV_scale = resultTestScaleFactor(scale,result="PPV")
+F1_scale = resultTestScaleFactor(scale,result="F1")
+
+
+
+xValueNB = [i for i in range(1,11)]
+neighbours = testMinNeighbours(ellipseList)
+TPR_nb = resultTestScaleFactor(neighbours,result="TPR")
+PPV_nb = resultTestScaleFactor(neighbours,result="PPV")
+F1_nb = resultTestScaleFactor(neighbours,result="F1")
+
+plt.plot(xValueNB, TPR_nb)
+plt.show()
+plt.plot(xValueNB,PPV_nb)
+plt.show()
+plt.plot(xValueNB,F1_nb)
+plt.show()
 
 
