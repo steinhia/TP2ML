@@ -6,7 +6,12 @@ import cv2
 from matplotlib import pyplot as plt
 from createGlobalEllipseDataBase import Ellipse
 from createGlobalEllipseDataBase import loadGlobalListFromFile
+from loadWIDERFaces import WIDERDatabaseLoader
+from loadWIDERFaces import WIDER_IMAGE_FOLDER
 from os import path
+
+TRACE=False
+USE_WIDER_DB=False
 
 face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt2.xml')
 #eye_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_eye.xml')
@@ -74,7 +79,7 @@ def testDataBase(scaleFactor,minNeighbors,ellipseDict):
             #    print i
 
             ellipseFilename=ellipseDict[ellipses][0].imageFileName
-            res=UnitTest(scaleFactor,minNeighbors,ellipseFilename,False)
+            res=UnitTest(scaleFactor,minNeighbors,ellipseFilename,TRACE)
             if(res!=-1):
                 n_images+=1
                 anal=analyseResult(res,ellipseDict[ellipses])
@@ -109,8 +114,12 @@ def testDataBase(scaleFactor,minNeighbors,ellipseDict):
     return [rateLittle,rateBig,rate]
             
 def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
-    path="originalPics/" + ellipseFilename + ".jpg"
-    #path=ellipseFilename
+    if USE_WIDER_DB:
+        path=WIDER_IMAGE_FOLDER + ellipseFilename
+        #print path
+    else:
+        path="originalPics/" + ellipseFilename + ".jpg"
+
     img = cv2.imread(path)
     res=[]
     #if img is None:
@@ -126,7 +135,7 @@ def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
         for (x,y,w,h) in faces:
             if(trace):
                 print "face"
-                cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
             else:
                 res.append([x+w/2,y+h/2])
         for (x,y,w,h) in profiles:
@@ -138,7 +147,7 @@ def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
         
         if(trace):
             cv2.imshow('img',img)
-            cv2.imwrite(ellipseFilename+"_detect.jpg",img)
+            #cv2.imwrite(ellipseFilename+"_detect.jpg",img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
     else:
@@ -167,7 +176,11 @@ def  analyseResult(res,ellipses):
     return [TP,FN,FP]
 
 
-ellipseList = loadGlobalListFromFile("ellipseList.pkl")
+if USE_WIDER_DB:
+    loader = WIDERDatabaseLoader()
+    ellipseList = loader.getFacesMap()
+else:
+    ellipseList = loadGlobalListFromFile("ellipseList.pkl")
 
 #UnitTest(1.2,5,"images_unitaires/profil2.jpg",True)
 #UnitTest(1.2,5,"2002/07/19/big/img_576",True)

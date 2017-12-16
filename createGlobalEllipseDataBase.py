@@ -14,23 +14,6 @@ class Ellipse():
         self.centerX = centerX
         self.centerY = centerY
 
-    def __init__(self,imageFileName,listEllipseInfo):
-        self.imageFileName = imageFileName
-        self.majorAxisRadius = listEllipseInfo[0]
-        self.minorAxisRadius = listEllipseInfo[1]
-        self.angle = listEllipseInfo[2]
-        self.centerX = listEllipseInfo[3]
-        self.centerY = listEllipseInfo[4]
-
-    def __init__(self,imagePath,ellipseParametersToParse):
-        splittedLine = ellipseParametersToParse.split()
-        self.imageFileName = imagePath
-        self.majorAxisRadius = float(splittedLine[0])
-        self.minorAxisRadius = float(splittedLine[1])
-        self.angle = float(splittedLine[2])
-        self.centerX = float(splittedLine[3])
-        self.centerY = float(splittedLine[4])
-        
     def __str__(self):
         result = self.imageFileName + " "
         result += str(self.majorAxisRadius) + " "
@@ -64,6 +47,16 @@ class Ellipse():
     def centerY(self):
         return self.centerY
 
+def parseEllipse(imagePath, line):
+    splittedLine = line.split()
+    imageFileName = imagePath
+    majorAxisRadius = float(splittedLine[0])
+    minorAxisRadius = float(splittedLine[1])
+    angle = float(splittedLine[2])
+    centerX = float(splittedLine[3])
+    centerY = float(splittedLine[4])
+    return Ellipse(imageFileName, majorAxisRadius, minorAxisRadius, angle, centerX, centerY)
+
 def separateEllipseFileByImages(fileName):
     separateList = []
     with open(fileName,"r") as f:
@@ -81,7 +74,7 @@ def separateEllipseFileByImages(fileName):
             for i in range(0,int(numberOfEllipse)):
                 if imagePath not in dico:
                         dico[imagePath] = []
-                dico[imagePath].append(Ellipse(imagePath,allLines[currentLine]))
+                dico[imagePath].append(parseEllipse(imagePath,allLines[currentLine]))
                 currentLine += 1
     return dico
     

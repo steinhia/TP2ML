@@ -2,5 +2,6 @@
 *.pyc
 *.pkl
 FDDB-folds
+WIDER_train
 haarcascades*
 originalPics*
