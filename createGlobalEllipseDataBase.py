@@ -101,5 +101,5 @@ def loadGlobalListFromFile(nameOfFile):
     with open(nameOfFile,'rb') as f:
         return pickle.load(f)
     
-saveGlobalListIntoFile("ellipseList.pkl")
+#saveGlobalListIntoFile("ellipseList.pkl")
 
