@@ -12,6 +12,7 @@ from os import path
 
 TRACE=False
 USE_WIDER_DB=False
+RECTANGLE_COVER_PERCENT=0.5
 
 face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt2.xml')
 #eye_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_eye.xml')
@@ -112,6 +113,56 @@ def testDataBase(scaleFactor,minNeighbors,ellipseDict):
 #    print "big"
 #    print rateBig
     return [rateLittle,rateBig,rate]
+
+def mergeDetections(list1, list2, img):
+    result = []
+
+    # Add all detections from list1
+    for (x,y,w,h) in list1:
+        result.append([x+w/2, y+h/2])
+        if(TRACE):
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+
+    # Add non redundant detections from list2
+    for (x,y,w,h) in list2:
+        if(TRACE):
+            cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+
+        isRedundant = False
+        for (x2,y2,w2,h2) in list1:
+            left = max(x,x2)
+            right = min(x+w,x2+w2)
+            top = max(y,y2)
+            bottom = min(y+h,y2+h2)
+
+            # Go to next rectangle if no intersection
+            if left > right or top > bottom:
+                continue
+
+            # If one of the rectangle is inside the other one
+            if x>=x2 and y>=y2 and x+w<=x2+w2 and y+h<=y2+h2:
+                isRedundant = True
+            if x2>=x and y2>=y and x2+w2<=x+w and y2+h2<=y+h:
+                isRedundant = True
+
+            areaIntersection = (right-left)*(bottom-top)
+            area = w*h
+
+            if float(areaIntersection)/float(area) > RECTANGLE_COVER_PERCENT:
+                isRedundant = True
+
+            # No need to take this rectangle into account
+            if isRedundant:
+                if (TRACE):
+                    cv2.rectangle(img,(left,top),(right,bottom),(0,0,255),2)
+                break
+
+        if not isRedundant:
+            result.append([x+w/2, y+h/2])
+
+    return result
+#end mergeDetections
+
             
 def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
     if USE_WIDER_DB:
@@ -131,19 +182,7 @@ def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         profiles = profil_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
-        res=[]
-        for (x,y,w,h) in faces:
-            if(trace):
-                print "face"
-                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-            else:
-                res.append([x+w/2,y+h/2])
-        for (x,y,w,h) in profiles:
-            if(trace):
-                print "profil"	
-                cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-            else:
-                res.append([x+w/2,y+h/2])
+        res = mergeDetections(faces, profiles, img)
         
         if(trace):
             cv2.imshow('img',img)
@@ -152,6 +191,7 @@ def UnitTest(scaleFactor,minNeighbors,ellipseFilename,trace):
             cv2.destroyAllWindows()
     else:
         res=-1
+
     return res
 
 def isInsideEllipse(center,ellipse):
