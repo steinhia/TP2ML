@@ -13,6 +13,7 @@ from os import path
 TRACE=False
 USE_WIDER_DB=False
 RECTANGLE_COVER_PERCENT=0.5
+TEST_RECTANGLE_IN_ELLIPSE_PERCENT=0.6
 
 face_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_frontalface_alt2.xml')
 #eye_cascade = cv2.CascadeClassifier('haarcascades/haarcascade_eye.xml')
@@ -119,7 +120,7 @@ def mergeDetections(list1, list2, img):
 
     # Add all detections from list1
     for (x,y,w,h) in list1:
-        result.append([x+w/2, y+h/2])
+        result.append([x+w/2, y+h/2, w, h])
         if(TRACE):
             cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
 
@@ -158,7 +159,7 @@ def mergeDetections(list1, list2, img):
                 break
 
         if not isRedundant:
-            result.append([x+w/2, y+h/2])
+            result.append([x+w/2, y+h/2, w, h])
 
     return result
 #end mergeDetections
@@ -199,12 +200,30 @@ def isInsideEllipse(center,ellipse):
     Y = -1*(center[0]-ellipse.centerX)*math.sin(ellipse.angle) + (center[1]-ellipse.centerY)*math.cos(ellipse.angle)
     return((pow(X,2)/pow(ellipse.majorAxisRadius,2)) + (pow(Y,2)/pow(ellipse.minorAxisRadius,2)) <= 1)
 
+def isRectangleInEllipse(r, e):
+    left = max(r[0]-r[2]/2,e.centerX-e.majorAxisRadius)
+    right = min(r[0]+r[2]/2,e.centerX+e.majorAxisRadius)
+    top = max(r[1]-r[3]/2,e.centerY-e.minorAxisRadius)
+    bottom = min(r[1]+r[3]/2,e.centerY+e.minorAxisRadius)
+    
+    if left > right or top > bottom:
+        return False
+    
+    # Ratio between intersection area and ground truth
+    intersectionAreaPercentage = (right-left)*(bottom-top) / (4*e.majorAxisRadius*e.minorAxisRadius)
+
+    if (intersectionAreaPercentage > TEST_RECTANGLE_IN_ELLIPSE_PERCENT):
+        return True
+
+    return False
+
 
 def  analyseResult(res,ellipses):
     TP=0
     for i in res:
         for ellipse in ellipses:
-            if(isInsideEllipse(i,ellipse)):
+            #if(isInsideEllipse(i,ellipse)):
+            if (isRectangleInEllipse(i,ellipse)):
                 TP+=1
     FN=max(len(ellipses)-TP,0)
     FP=max(len(res)-TP,0)
